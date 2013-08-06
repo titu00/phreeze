@@ -21,6 +21,7 @@ of the view, update operations may not work.  Views are de-selected by default.<
 			<th>Table</th>
 			<th>Singular Name</th>
 			<th>Plural Name</th>
+			<th>Config</th>
 			<th>Column Prefix</th>
 		</tr>
 	</thead>
@@ -93,6 +94,15 @@ of the view, update operations may not work.  Views are de-selected by default.<
 			<?php } else { ?>
 				<td><input class="objname objname-singular" type="text" id="<?php $this->eprint($table->Name); ?>_singular" name="<?php $this->eprint($table->Name); ?>_singular" value="<?php $this->eprint($this->studlycaps($table->Name)); ?>" /></td>
 				<td><input class="objname objname-plural" type="text" id="<?php $this->eprint($table->Name); ?>_plural" name="<?php $this->eprint($table->Name); ?>_plural" value="<?php $this->eprint($this->studlycaps($this->plural($table->Name))); ?>" /></td>
+				<td><textarea class="objname objname-config" id="<?php $this->eprint($table->Name); ?>_config" name="<?php $this->eprint($table->Name); ?>_config">
+{
+    "replaceVars":{
+        "controllerName":""
+    },
+    "masterTable":"",
+    "childField":""
+}
+                </textarea></td>
 			<?php } ?>
 			<td><input type="text" class="colprefix span2" id="<?php $this->eprint($table->Name); ?>_prefix" name="<?php $this->eprint($table->Name); ?>_prefix" value="<?php $this->eprint($table->ColumnPrefix); ?>" size="15" /></td>
 		</tr>

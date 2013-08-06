@@ -216,6 +216,24 @@ class GeneratorController extends BaseController
 							array('{$singular}','{$plural}','{$table}','{$appname}','{$singular|lower}','{$plural|lower}','{$table|lower}','{$appname|lower}','{$singular|upper}','{$plural|upper}','{$table|upper}','{$appname|upper}'),
 							array($singular,$plural,$tableName,$appname,strtolower($singular),strtolower($plural),strtolower($tableName),strtolower($appname),strtoupper($singular),strtoupper($plural),strtoupper($tableName),strtoupper($appname)),
 							$templateFile->destination);
+                    
+                    if(trim($_REQUEST[$tableName."_config"])!="")
+                    {
+                        $configJSON = json_decode($_REQUEST[$tableName."_config"],true);    
+                        if(json_last_error ()== JSON_ERROR_NONE)
+                        {
+                            if(array_key_exists("replaceVars",$configJSON))
+                            {
+                                foreach($configJSON["replaceVars"] as $key => $val)
+                                {
+                                    $templateFilename = str_replace("{\$".$key."}",$val,$templateFilename);
+                                }
+                            }    
+                        }
+                    }
+					
+                    
+			
 
 					$smarty->clearAllAssign();
 					$smarty->assign("appname",$appname);
@@ -228,6 +246,7 @@ class GeneratorController extends BaseController
 					$smarty->assign("appRoot",$appRoot);
 					$smarty->assign("includePath",$includePath);
 					$smarty->assign("includePhar",$includePhar);
+					$smarty->assign("configJSON",$configJSON);
 					$smarty->assign("enableLongPolling",$enableLongPolling);
 					$smarty->assign("PHREEZE_VERSION",Phreezer::$Version);
 
