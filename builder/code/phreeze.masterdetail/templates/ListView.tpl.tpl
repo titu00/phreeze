@@ -35,7 +35,7 @@
 	
 </h1>
 
-	<table class="collection table table-bordered table-hover">
+	<table class="table table-bordered table-hover">
 		<thead>
 			<tr>
             <?php
