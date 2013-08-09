@@ -54,6 +54,7 @@ class GeneratorController extends BaseController
 		$dbSchema = new DBSchema($server);
 
 		$debug = isset($_REQUEST["debug"]) && $_REQUEST["debug"] == "1";
+        //$debug=1;
 		$parameters = array();
 		$tableNames = $_REQUEST["table_name"];
 		$packageName = $_REQUEST["package"];
@@ -216,12 +217,16 @@ class GeneratorController extends BaseController
 							array('{$singular}','{$plural}','{$table}','{$appname}','{$singular|lower}','{$plural|lower}','{$table|lower}','{$appname|lower}','{$singular|upper}','{$plural|upper}','{$table|upper}','{$appname|upper}'),
 							array($singular,$plural,$tableName,$appname,strtolower($singular),strtolower($plural),strtolower($tableName),strtolower($appname),strtoupper($singular),strtoupper($plural),strtoupper($tableName),strtoupper($appname)),
 							$templateFile->destination);
+                    $smarty->clearAllAssign();
+                    
                     
                     if(trim($_REQUEST[$tableName."_config"])!="")
                     {
                         $configJSON = json_decode($_REQUEST[$tableName."_config"],true);    
                         if(json_last_error ()== JSON_ERROR_NONE)
                         {
+                            
+                            
                             if(array_key_exists("replaceVars",$configJSON))
                             {
                                 foreach($configJSON["replaceVars"] as $key => $val)
@@ -229,13 +234,16 @@ class GeneratorController extends BaseController
                                     $templateFilename = str_replace("{\$".$key."}",$val,$templateFilename);
                                 }
                             }    
+                        }else
+                        {
+                            $configJSON= json_last_error ();
                         }
                     }
 					
-                    
+                    $smarty->assign("configJSON",$configJSON);
 			
 
-					$smarty->clearAllAssign();
+					
 					$smarty->assign("appname",$appname);
 					$smarty->assign("singular",$singular);
 					$smarty->assign("plural",$plural);
