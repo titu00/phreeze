@@ -203,6 +203,21 @@ of the view, update operations may not work.  Views are de-selected by default.<
 		<button class="btn btn-inverse"><i class="icon-play"></i> Generate Application</button>
 	</p>
 </form>
+<!DOCTYPE HTML>
+<head>
+	<meta http-equiv="content-type" content="text/html" />
+	<meta name="author" content="titu00" />
+
+	<title>Untitled 2</title>
+</head>
+
+
+
+<form action="generate" method="post">
+<textarea name="jsonfile"></textarea>
+
+<input type="submit">
+</form>
 
 <script type="text/javascript" src="scripts/jquery-1.9.1.min.js"></script>
 <script type="text/javascript" src="scripts/analyze.js"></script>

@@ -79,14 +79,16 @@
   <div class="btn-group">
 
 
-{foreach from=$configJSON['actions'] key=actions item=i}
-    {if $i.href|strstr:"&id&"}
-        {$i.href= {$i.href|replace:'&id&':"<%= _.escape(item.get('{$table->GetPrimaryKeyName()|studlycaps|lcfirst}')) %>" }}
-    {/if}
-    <a class="btn" href="{$i.href}"><i class="{$i.icon}">{$i.label}</i></a>
-    
-{/foreach}
 
+{if isset($configJSON['actions'])}
+    {foreach from=$configJSON['actions'] key=actions item=i}
+        {if $i.href|strstr:"&id&"}
+            {$i.href= {$i.href|replace:'&id&':"<%= _.escape(item.get('{$table->GetPrimaryKeyName()|studlycaps|lcfirst}')) %>" }}
+        {/if}
+        <a class="btn" href="{$i.href}"><i class="{$i.icon}">{$i.label}</i></a>
+        
+    {/foreach}
+{/if}
 </div>
 </div>
 </td>

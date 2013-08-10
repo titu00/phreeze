@@ -25,6 +25,10 @@ class GeneratorController extends BaseController
 	 * dropdown containing all of the remaining tables
 	 */
 	static $DEFAULT_MAX_ITEMS_IN_TOPNAV = 4;
+ 
+    public $zipFile;
+    public $debug;
+    public $debug_output;
 	
 	/**
 	 * Override here for any controller-specific functionality
@@ -37,7 +41,7 @@ class GeneratorController extends BaseController
 	/**
 	 * Generate the application based on the selected tables and options
 	 */
-	public function Generate()
+	public function GenerateMechanics()
 	{
 		// check for all required fields
 		if ( empty($_REQUEST["table_name"]) )
@@ -53,12 +57,12 @@ class GeneratorController extends BaseController
 		$server = new DBServer($connection);
 		$dbSchema = new DBSchema($server);
 
-		$debug = isset($_REQUEST["debug"]) && $_REQUEST["debug"] == "1";
-        //$debug=1;
+		$this->debug = isset($_REQUEST["debug"]) && $_REQUEST["debug"] == "1";
+        //$this->debug=1;
 		$parameters = array();
 		$tableNames = $_REQUEST["table_name"];
 		$packageName = $_REQUEST["package"];
-		$debug_output = "";
+		$this->debug_output = "";
 		
 		$selectedTables = array();
 		foreach ($tableNames as $tableName)
@@ -81,7 +85,7 @@ class GeneratorController extends BaseController
 		// check for required parameters
 		if (!array_key_exists('max_items_in_topnav', $parameters)) $parameters['max_items_in_topnav'] = self::$DEFAULT_MAX_ITEMS_IN_TOPNAV;
 
-		$zipFile = new zipfile();
+		
 
 		$codeRoot = GlobalConfig::$APP_ROOT . '/code/';
 		$tempRoot = GlobalConfig::$APP_ROOT . '/temp/';
@@ -130,15 +134,16 @@ class GeneratorController extends BaseController
 				$contents = file_get_contents($codeRoot . $templateFile->source);
 
 				// this is a direct copy
-				if ($debug)
+				if ($this->debug)
 				{
-					$debug_output .= "\r\n###############################################################\r\n"
+				/*	echo " ". "\r\n###############################################################\r\n"
 					. "# $templateFilename\r\n###############################################################\r\n"
 					. "(contents of " . $codeRoot . $templateFile->source . ")\r\n";
+                    */
 				}
 				else
 				{
-					$zipFile->addFile( $contents , $templateFilename);
+					$this->zipFile->addFile( $contents , $templateFilename);
 				}
 			}
 			elseif ($templateFile->generate_mode == 1)
@@ -189,27 +194,30 @@ class GeneratorController extends BaseController
 				$smarty->assign("tableInfos",$tableInfos);
 				$smarty->assign("selectedTables",$selectedTables);
 
-				if ($debug)
+				if ($this->debug)
 				{
-					$debug_output .= "\r\n###############################################################\r\n"
+					/*echo " ". "\r\n###############################################################\r\n"
 					. "# $templateFilename\r\n###############################################################\r\n"
 					. $smarty->fetch($templateFile->source) . "\r\n";
+                    */
 				}
 				else
 				{
 					// we don't like bare linefeed characters
 					$content = $body = preg_replace("/^(?=\n)|[^\r](?=\n)/", "\\0\r", $smarty->fetch($templateFile->source));
 
-					$zipFile->addFile( $content , $templateFilename);
+					$this->zipFile->addFile( $content , $templateFilename);
 				}
 			}
 			else
 			{
 				// enumerate all selected tables and merge them with the selected template
 				// append each to the zip file for output
+                
 				foreach ($tableNames as $tableName)
 				{
 					$singular = $_REQUEST[$tableName."_singular"];
+                    
 					$plural = $_REQUEST[$tableName."_plural"];
 					$prefix = $_REQUEST[$tableName."_prefix"];
 
@@ -219,29 +227,38 @@ class GeneratorController extends BaseController
 							$templateFile->destination);
                     $smarty->clearAllAssign();
                     
+                    $configJSON="";
                     
-                    if(trim($_REQUEST[$tableName."_config"])!="")
+                    if(isset($_REQUEST[$tableName."_config"]) )
                     {
-                        $configJSON = json_decode($_REQUEST[$tableName."_config"],true);    
-                        if(json_last_error ()== JSON_ERROR_NONE)
+                        
+                        if(trim($_REQUEST[$tableName."_config"])!="")
                         {
+                             
+                            $configJSON = json_decode($_REQUEST[$tableName."_config"],true);
                             
                             
-                            if(array_key_exists("replaceVars",$configJSON))
+                            
+                            if(json_last_error ()== JSON_ERROR_NONE)
                             {
-                                foreach($configJSON["replaceVars"] as $key => $val)
+                                
+                                
+                                if(array_key_exists("replaceVars",$configJSON))
                                 {
-                                    $templateFilename = str_replace("{\$".$key."}",$val,$templateFilename);
-                                }
-                            }    
-                        }else
-                        {
-                            $configJSON= json_last_error ();
+                                    foreach($configJSON["replaceVars"] as $key => $val)
+                                    {
+                                        $templateFilename = str_replace("{\$".$key."}",$val,$templateFilename);
+                                    }
+                                }    
+                            }else
+                            {
+                                $configJSON= json_last_error ();
+                            }
                         }
                     }
 					
                     $smarty->assign("configJSON",$configJSON);
-			
+			         
 
 					
 					$smarty->assign("appname",$appname);
@@ -254,7 +271,7 @@ class GeneratorController extends BaseController
 					$smarty->assign("appRoot",$appRoot);
 					$smarty->assign("includePath",$includePath);
 					$smarty->assign("includePhar",$includePhar);
-					$smarty->assign("configJSON",$configJSON);
+					
 					$smarty->assign("enableLongPolling",$enableLongPolling);
 					$smarty->assign("PHREEZE_VERSION",Phreezer::$Version);
 
@@ -268,6 +285,7 @@ class GeneratorController extends BaseController
 							$tableName = $table->Name;
 							$tableInfos[$tableName] = Array();
 							$tableInfos[$tableName]['table'] = $dbSchema->Tables[$tableName];
+                            
 							$tableInfos[$tableName]['singular'] = $_REQUEST[$tableName."_singular"];
 							$tableInfos[$tableName]['plural'] = $_REQUEST[$tableName."_plural"];
 							$tableInfos[$tableName]['prefix'] = $_REQUEST[$tableName."_prefix"];
@@ -284,15 +302,17 @@ class GeneratorController extends BaseController
 					}
 
 					//print "<pre>"; print_r($dbSchema->Tables[$tableName]->PrimaryKeyIsAutoIncrement()); die();
-					if ($debug)
+					if ($this->debug)
 					{
-						$debug_output .= "\r\n###############################################################\r\n"
+					  
+						/*echo " ". "\r\n###############################################################\r\n"
 						. "# $templateFilename\r\n###############################################################\r\n"
 						. $smarty->fetch($templateFile->source) . "\r\n";
+                        */
 					}
 					else
 					{
-						$zipFile->addFile( $smarty->fetch($templateFile->source) , $templateFilename);
+						$this->zipFile->addFile( $smarty->fetch($templateFile->source) , $templateFilename);
 					}
 
 				}
@@ -300,10 +320,80 @@ class GeneratorController extends BaseController
 
 		}
 
-		if ($debug)
+		
+	}
+    
+    public function Generate ()
+    {
+        $this->zipFile = new zipfile();
+       if ( isset($_REQUEST["jsonfile"]) )
+       {
+            
+                $jsonfile = json_decode($_REQUEST["jsonfile"],true);    
+                
+                if(json_last_error ()== JSON_ERROR_NONE)
+                {
+                    
+               		foreach($jsonfile as $key => $val)
+                    {
+               		   if(! (is_array($val)))
+                       {
+                            
+                            $_REQUEST[$key]=$val;
+                       }
+                       
+               		}
+                    
+                    foreach($jsonfile['packages'] as $packagedata)
+                    {
+                        
+                        $_REQUEST['package']=$packagedata['name'];
+                        $_REQUEST['table_name']=array();
+                                                
+                        foreach($packagedata['tables'] as $tabledata)
+                        {
+                        
+                        
+                        //    echo $packagedata['name']."::".print_r($tabledata,true)."<br>";
+                            $_REQUEST['table_name'][]=$tabledata['table_name'];
+                           // echo $tabledata['table_name'].":::".$tabledata['singular']."<br>";
+                            $_REQUEST[$tabledata['table_name'].'_singular']=$tabledata['singular'];
+                            $_REQUEST[$tabledata['table_name'].'_plural']=$tabledata['plural'];
+                            $_REQUEST[$tabledata['table_name'].'_prefix']=$tabledata['prefix'];
+                            if(array_key_exists('config',$tabledata))
+                            {
+                                 
+                                $_REQUEST[$tabledata['table_name'].'_config']=json_encode($tabledata['config']);
+                                
+                             //   echo print_r($tabledata['config'],true). $tabledata['table_name']."<br>";  
+                            }else{
+                                $_REQUEST[$tabledata['table_name'].'_config']="";
+                            }
+                            
+                            
+                        }
+                        
+                        $this->GenerateMechanics();    
+                        
+                    }   
+                                           
+                        
+                }else
+                {
+                    	throw new Exception("JSON file error: ".json_last_error ()); 
+                }
+            
+         
+       }else{
+        
+            $this->GenerateMechanics();     
+        
+       }
+   
+      if ($this->debug)
 		{
-			header("Content-type: text/plain");
-			print $debug_output;
+			//header("Content-type: text/plain");
+			//print $this->debug_output;
 		}
 		else
 		{
@@ -313,12 +403,13 @@ class GeneratorController extends BaseController
 			// laplix 2007-11-02.
 			// Use the application name provided by the user in show_tables.
 			//header("Content-disposition: attachment; filename=".str_replace(" ","_",$G_CONNSTR->DBName).".zip");
-			header("Content-disposition: attachment; filename=".str_replace(" ","_",strtolower(str_replace("/","", $appRoot))).".zip");
+			header("Content-disposition: attachment; filename=".str_replace(" ","_",strtolower(str_replace("/","", "cargo"))).".zip");
 
 			header("Content-Transfer-Encoding: Binary");
 			header('Content-Type: application/zip');
-			print $zipFile->file();
-		}
-	}
+			print $this->zipFile->file();
+		}     
+        
+    } 
 }
 ?>
