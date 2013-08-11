@@ -343,7 +343,7 @@ class GeneratorController extends BaseController
                        }
                        
                		}
-                    
+                    $generationFlag="false";
                     foreach($jsonfile['packages'] as $packagedata)
                     {
                         
@@ -369,12 +369,23 @@ class GeneratorController extends BaseController
                             }else{
                                 $_REQUEST[$tabledata['table_name'].'_config']="";
                             }
-                            
+                            if(isset($packagedata['nonunique_table']))
+                            {
+                                if($packagedata['nonunique_table']=="true")
+                                {
+                                    $this->GenerateMechanics();   
+                                    $generationFlag="true";         
+                                }
+                                
+                            }
                             
                         }
                         
-                        $this->GenerateMechanics();    
-                        
+                        if ($generationFlag!="true")
+                        {
+                            $this->GenerateMechanics();
+                        }  
+                        $generationFlag="false"; 
                     }   
                                            
                         
